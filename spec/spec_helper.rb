@@ -16,12 +16,19 @@
 # users commonly want.
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
+
 require 'rubygems' unless defined?(Gem)
 require 'bundler'
 Bundler.setup(:default, :development)
 require 'active_record'
 require_relative 'models/user'
+require 'airborne'
 require 'peel'
+
+Airborne.configure do |config|
+  config.rack_app = Test::API
+end
+
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
