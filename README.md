@@ -25,6 +25,19 @@ Or install it yourself as:
 
 ## Usage
 
+###ActiveRecord Model
+
+Include the ActiveRecord module in your user model:
+
+```ruby
+class User < ActiveRecord::Base
+  include Groken::ActiveRecord
+end
+```
+
+The model that it is included in must have `email` and `token` fields.
+
+
 ###API Side
 
 To create an API with the methods protected by token authentication, subclass
