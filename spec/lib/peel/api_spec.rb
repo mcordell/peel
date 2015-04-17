@@ -10,8 +10,15 @@ describe Peel::API do
     end
 
     context "when passing a valid auth token in the Authorization header" do
-      let!(:user) { create_user('test@example.com') }
-      let(:valid_token) { Peel.encode_payload({'email' => 'test@example.com'}) }
+      let(:user) { create_user('test@example.com') }
+      let(:token) { user.generate_token }
+      let(:valid_token) { Peel.encode_payload({'email' => 'test@example.com', 'token' => token})}
+
+      before(:all) do
+        class User
+          include Peel::ActiveRecord
+        end
+      end
 
       after { user.delete }
 

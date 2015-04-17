@@ -34,8 +34,8 @@ describe Peel do
 
   describe ".decode_payload" do
     let(:secret) { 'secret' }
-    let(:payload) { {'email' => 'test@example.com'} }
-    let(:jwt_token) { 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20ifQ.3QJBsXLwBNSyLWLDA5nugTzc83x9Ac9zsxKkghKJ__E' }
+    let(:payload) { {'email' => 'test@example.com', 'token' => 'another token'} }
+    let(:jwt_token) { 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJ0b2tlbiI6ImFub3RoZXIgdG9rZW4ifQ.CLqqEuFqFC69SAfz92B6-fToKUV7rVZsdtdc40Fv7eA' }
 
     before do
       @old_secret = ENV['PEEL_SECRET']
@@ -109,10 +109,11 @@ describe Peel do
 
   describe ".authenticate_with_token" do
     let(:email) { 'test@example.com' }
-    let(:payload) { { 'email' => email } }
+    let(:payload) { { 'email' => email, 'token' => 'sometoken' } }
+    let(:encrypted_token) { Peel.encrypt_token(payload['token']) }
 
     before do
-      @user = User.create(email: email)
+      @user = User.create(email: email, token: encrypted_token)
       @old = ENV['PEEL_SECRET']
       ENV['PEEL_SECRET'] = 'secret'
       @jwt_token = Peel.encode_payload(payload)
@@ -134,6 +135,65 @@ describe Peel do
 
       it "returns false" do
         expect(Peel.authenticate_with_token(bad_email_token)).to be_falsey
+      end
+    end
+
+    context "when passed a token that contains a email belonging to a user but the wrong token" do
+      let(:bad_token) { 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJ0b2tlbiI6ImJhZHRva2VuIn0.gBMpYYsQmE1aPUvZ6jQPd_NzDR3zTsuoRjaXQ4LhchA' }
+
+      it "returns false" do
+        expect(Peel.authenticate_with_token(bad_token)).to be_falsey
+      end
+    end
+
+    context "when passed a token that contains a email belonging to a user and the correct token" do
+      it "returns the correct user" do
+        expect(Peel.authenticate_with_token(@jwt_token)).to eq @user
+      end
+    end
+  end
+
+  describe ".generate_token" do
+    context "when not passed a length" do
+      it "returns a hex string 16 chars long" do
+        expect(Peel.generate_token).to match(/[a-f0-9]{16}/)
+      end
+    end
+
+    context "when passed a length" do
+      it "returns a hex string that long long" do
+        expect(Peel.generate_token(40)).to match(/[a-f0-9]{40}/)
+      end
+    end
+  end
+
+  describe "encrypting and testing of tokens" do
+    let(:token) { "this is something alrgiht" }
+    let(:encoded_token) { BCrypt::Password.create(token) }
+
+    describe ".encrypt_token" do
+      it "returns a string" do
+        expect(Peel.encrypt_token(token)).to be_a String
+      end
+    end
+
+    describe ".test_token" do
+      context "when the second param is an encrptyed match for the first token" do
+        it "returns true" do
+          expect(Peel.test_token(encoded_token, token)).to be_truthy
+        end
+      end
+
+      context "when the second param is not an encrptyed match for the first token" do
+        it "returns false" do
+          expect(Peel.test_token(encoded_token, 'something else')).to be_falsey
+        end
+      end
+
+      context "when the first param is not an encrypted token" do
+        it "raises an error" do
+          expect{Peel.test_token(token, token)}.to raise_error
+        end
       end
     end
   end
