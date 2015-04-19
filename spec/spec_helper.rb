@@ -16,6 +16,12 @@
 # users commonly want.
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
+require 'rubygems' unless defined?(Gem)
+require 'bundler'
+Bundler.setup(:default, :development)
+require 'active_record'
+require_relative 'models/user'
+require 'peel'
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
@@ -88,4 +94,25 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
+end
+
+unless ActiveRecord::Base.connected?
+  ActiveRecord::Base.configurations[:test] = {
+    :adapter   => 'sqlite3',
+    :database  => 'token_test'
+  }
+  ActiveRecord::Base.establish_connection(ActiveRecord::Base.configurations[:test])
+end
+
+
+connection = ActiveRecord::Base.connection
+connection.drop_table(:users)
+unless connection.table_exists? 'users'
+  connection.create_table(:users)
+  connection.add_column(:users, :email, :string)
+  connection.add_column(:users, :token, :text)
+end
+
+def create_user(email)
+  User.create(email: email)
 end
