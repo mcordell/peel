@@ -17,6 +17,8 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+ENV['PEEL_SECRET'] = 'replaceme'
+
 require 'rubygems' unless defined?(Gem)
 require 'bundler'
 Bundler.setup(:default, :development)
@@ -24,6 +26,7 @@ require 'active_record'
 require_relative 'models/user'
 require 'airborne'
 require 'peel'
+require_relative 'test_api/test_api'
 
 Airborne.configure do |config|
   config.rack_app = Test::API
