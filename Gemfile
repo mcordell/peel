@@ -4,5 +4,5 @@ source 'https://rubygems.org'
 gemspec
 
 group :development do
-  gem 'airborne', git: 'https://github.com/mcordell/airborne', branch: 'fix-rack-headers'
+  gem 'airborne', git: 'https://github.com/brooklynDev/airborne', branch: 'master'
 end
